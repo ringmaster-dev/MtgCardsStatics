@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Downloaded decklist data (재생성 가능한 산출물 — 스크립트로 다시 받을 수 있음)
+decklists/
+
+# Logs / temp
+*.log
+.DS_Store
+
+# Claude Code 로컬 설정 (개인 전용)
+.claude/settings.local.json
