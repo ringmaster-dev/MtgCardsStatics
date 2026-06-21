@@ -4,6 +4,14 @@ node_modules/
 # Downloaded decklist data (재생성 가능한 산출물 — 스크립트로 다시 받을 수 있음)
 decklists/
 
+# Scryfall bulk data (외부에서 받는 대용량 파일)
+default-cards*.json
+
+# 스크립트 출력물 (재생성 가능)
+*.json
+!package.json
+!package-lock.json
+
 # Logs / temp
 *.log
 .DS_Store
