@@ -145,9 +145,10 @@ function getEventUrl(relFilePath) {
 }
 
 // MTGO 이벤트 URL에서 표시용 레이블 추출
-// "https://www.mtgo.com/decklist/modern-league-2026-06-18" → "Modern League"
+// "https://www.mtgo.com/decklist/modern-league-2026-06-18#deck_Player" → "Modern League"
 function eventLabel(url) {
-  const m = url.match(/\/decklist\/(.+?)-(20\d{2}-\d{2}-\d{2})\d*$/);
+  const cleanUrl = url.split('#')[0];
+  const m = cleanUrl.match(/\/decklist\/(.+?)-(20\d{2}-\d{2}-\d{2})\d*$/);
   if (!m) return 'MTGO';
   return m[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -307,7 +308,10 @@ async function main() {
     const urls = new Set();
     for (const f of files) {
       const u = getEventUrl(f);
-      if (u) urls.add(u);
+      if (u) {
+        const player = path.basename(f, '.txt');
+        urls.add(`${u}#deck_${player}`);
+      }
     }
     cardEventUrls.set(name, urls);
   }
