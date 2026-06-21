@@ -23,4 +23,8 @@ echo "==> [4/4] Building index page..."
 node buildIndex.js
 
 echo ""
+echo "==> [5/5] Building Pauper page..."
+node buildPauperPage.js
+
+echo ""
 echo "Done."
