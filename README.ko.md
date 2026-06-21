@@ -7,6 +7,8 @@ MTGO 덱리스트 수집 및 분석 스크립트 모음입니다.
 | `downloadDecklists.js` | [downloadDecklists.ko.md](downloadDecklists.ko.md) | MTGO 공식 사이트에서 덱리스트를 받아 로컬에 저장 |
 | `analyzeCards.js` | [analyzeCards.ko.md](analyzeCards.ko.md) | 저장된 덱리스트에서 포맷별 카드 사용 통계 출력 |
 | `setCards.js` | [setCards.ko.md](setCards.ko.md) | 특정 세트 수록 카드 중 특정 포맷에서 실제 사용된 카드 목록 출력 |
+| `buildSetPage.js` | [buildSetPage.ko.md](buildSetPage.ko.md) | 세트별 HTML 페이지 생성 — 포맷별 카드 사용 현황 표시 |
+| `buildIndex.js` | [buildIndex.ko.md](buildIndex.ko.md) | 두 패널 레이아웃의 인덱스 페이지 생성 |
 
 ---
 

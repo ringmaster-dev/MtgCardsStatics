@@ -7,6 +7,8 @@ A collection of scripts for downloading and analyzing MTGO decklists.
 | `downloadDecklists.js` | [downloadDecklists.md](downloadDecklists.md) | Download event decklists from the MTGO website and save them locally |
 | `analyzeCards.js` | [analyzeCards.md](analyzeCards.md) | Aggregate card usage statistics from saved decklists, broken down by format |
 | `setCards.js` | [setCards.md](setCards.md) | List cards from a given set that are actually played in a given format |
+| `buildSetPage.js` | [buildSetPage.md](buildSetPage.md) | Generate an HTML page per set showing card usage across all formats |
+| `buildIndex.js` | [buildIndex.md](buildIndex.md) | Generate the index page that lists all sets and loads them in a two-panel layout |
 
 ---
 
