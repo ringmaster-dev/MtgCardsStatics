@@ -304,6 +304,12 @@ async function main() {
     const dir = path.join(OUTPUT_DIR, format, year, month, day);
     fs.mkdirSync(dir, { recursive: true });
 
+    // 이벤트 메타데이터 저장 (buildLanding.js 에서 MTGO 링크 생성에 사용)
+    const metaPath = path.join(dir, '_meta.json');
+    if (FORCE || !fs.existsSync(metaPath)) {
+      fs.writeFileSync(metaPath, JSON.stringify({ eventUrl: event.href }, null, 2), 'utf8');
+    }
+
     let savedCount = 0;
     let skippedCount = 0;
     for (const deck of data.decklists) {

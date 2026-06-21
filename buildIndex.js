@@ -17,6 +17,7 @@ const readline = require('readline');
 const https    = require('https');
 
 const PAGES_DIR  = path.join(__dirname, 'pages');
+const SETS_DIR   = path.join(PAGES_DIR, 'Sets');
 const STANDARD_API = 'https://whatsinstandard.com/api/v6/standard.json';
 
 // --- Scryfall JSON 자동 탐색 ---
@@ -32,12 +33,11 @@ function resolveCardsJson() {
 }
 const CARDS_JSON = resolveCardsJson();
 
-// pages/ 에서 세트 코드 목록 수집 (index.html 제외)
+// pages/Sets/ 에서 세트 코드 목록 수집
 function collectSetCodes() {
-  if (!fs.existsSync(PAGES_DIR)) return [];
-  const EXCLUDE = new Set(['index.html', 'about.html']);
-  return fs.readdirSync(PAGES_DIR)
-    .filter(f => f.endsWith('.html') && !EXCLUDE.has(f))
+  if (!fs.existsSync(SETS_DIR)) return [];
+  return fs.readdirSync(SETS_DIR)
+    .filter(f => f.endsWith('.html'))
     .map(f => f.replace('.html', ''));
 }
 
@@ -101,7 +101,7 @@ async function fetchSetMeta(setCodes) {
 function renderSection(label, sets) {
   if (sets.length === 0) return '';
   const items = sets.map(s => `
-      <a class="set-item" href="${s.code}.html" target="setFrame" data-code="${s.code}" title="${s.released_at}">
+      <a class="set-item" href="Sets/${s.code}.html" target="setFrame" data-code="${s.code}" title="${s.released_at}">
         <span class="set-code">${s.code.toUpperCase()}</span>
         <span class="set-name">${escHtml(s.name)}</span>
       </a>`).join('');
@@ -114,7 +114,8 @@ function buildHtml(standardSets, otherSets) {
   const allSections = renderSection('Standard', standardSets)
     + (otherSets.length > 0 ? renderSection('Other', otherSets) : '');
 
-  const firstSet = (standardSets[0] || otherSets[0])?.code || '';
+  const defaultSrc = fs.existsSync(path.join(PAGES_DIR, 'landing.html')) ? 'landing.html'
+    : ((standardSets[0] || otherSets[0])?.code || '') + '.html';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -310,6 +311,7 @@ html, body {
       ${allSections}
     </div>
     <div class="sidebar-footer">
+      <a href="landing.html" target="setFrame">New Cards</a>
       <a href="about.html" target="setFrame">About</a>
     </div>
   </nav>
@@ -317,7 +319,7 @@ html, body {
   <div class="resize-handle" id="resizeHandle"></div>
 
   <div class="frame-wrap">
-    <iframe class="set-frame" name="setFrame" id="setFrame" src="${firstSet ? firstSet + '.html' : ''}"></iframe>
+    <iframe class="set-frame" name="setFrame" id="setFrame" src="${defaultSrc}"></iframe>
   </div>
 </div>
 

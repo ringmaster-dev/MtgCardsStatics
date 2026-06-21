@@ -28,7 +28,7 @@ function getArgEarly(name) { const i = process.argv.indexOf(name); return i !== 
 const SET_CODE  = (getArg('--set') || '').toLowerCase();
 const FROM_STR  = getArg('--from');
 const TO_STR    = getArg('--to');
-const OUT_DIR   = getArg('--out') || path.join(__dirname, 'pages');
+const OUT_DIR   = getArg('--out') || path.join(__dirname, 'pages', 'Sets');
 
 function parseYearMonth(str) {
   const m = str && str.match(/^(\d{4})[\/\-](\d{1,2})$/);

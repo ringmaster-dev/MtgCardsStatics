@@ -11,6 +11,11 @@ default-cards*.json
 *.json
 !package.json
 !package-lock.json
+!config/image-exclude.json
+
+# 생성된 HTML 페이지 (about.html 제외)
+pages/*
+!pages/about.html
 
 # Logs / temp
 *.log
