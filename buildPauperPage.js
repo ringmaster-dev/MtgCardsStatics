@@ -4,8 +4,23 @@ const fs       = require('fs');
 const path     = require('path');
 const readline = require('readline');
 
-const DECKLISTS_DIR = path.join(__dirname, 'decklists');
-const OUT_FILE      = path.join(__dirname, 'pages', 'pauper.html');
+const DECKLISTS_DIR   = path.join(__dirname, 'decklists');
+const OUT_FILE        = path.join(__dirname, 'pages', 'pauper.html');
+const EXCLUDE_CONFIG  = path.join(__dirname, 'config', 'image-exclude.json');
+
+function loadExcludeConfig() {
+  if (!fs.existsSync(EXCLUDE_CONFIG)) return {};
+  try { return JSON.parse(fs.readFileSync(EXCLUDE_CONFIG, 'utf8')); } catch { return {}; }
+}
+
+function isExcludedSet(card, cfg) {
+  const nameContains = cfg.excludeSetNameContains || [];
+  const types        = cfg.excludeSetTypes        || [];
+  const codes        = cfg.excludeSetCodes        || [];
+  return nameContains.some(s => (card.set_name || '').includes(s))
+      || types.includes(card.set_type || '')
+      || codes.includes((card.set || '').toLowerCase());
+}
 
 function resolveCardsJson() {
   const files = fs.readdirSync(__dirname).filter(f => /^default-cards.*\.json$/i.test(f));
@@ -62,7 +77,8 @@ function matchNeeded(scryfallName, needed) {
 
 // 각 카드의 가장 최근 common 인쇄 세트 + collector_number 조회
 async function buildCardIndex(cardNames) {
-  const needed = new Set(cardNames);
+  const needed    = new Set(cardNames);
+  const excludeCfg = loadExcludeConfig();
   // deckName → { setCode, setName, releasedAt, collectorNumber }
   const cardInfo = new Map();
 
@@ -81,7 +97,8 @@ async function buildCardIndex(cardNames) {
     if (!deckName) continue;
     if (card.lang && card.lang !== 'en') continue;
     if (card.rarity !== 'common') continue;
-    if ((card.type_line || '').includes('Basic Land')) continue;
+    if ((card.type_line || '').includes('Basic')) continue;
+    if (isExcludedSet(card, excludeCfg)) continue;
 
     const releasedAt = card.released_at || '';
     const prev = cardInfo.get(deckName);
@@ -93,6 +110,7 @@ async function buildCardIndex(cardNames) {
         setName:         card.set_name || card.set?.toUpperCase() || '',
         releasedAt,
         collectorNumber: card.collector_number || '',
+        imageUrl:        card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
       });
     }
   }
@@ -105,9 +123,10 @@ function escHtml(s) {
 
 function buildHtml(setColumns, totalDecks) {
   const cols = setColumns.map(({ setCode, setName, releasedAt, cards }) => {
-    const items = cards.map(({ name, deckCount, collectorNumber }) => {
+    const items = cards.map(({ name, deckCount, collectorNumber, imageUrl }) => {
       const pct = (deckCount / totalDecks * 100).toFixed(1);
-      return `      <li title="${deckCount} decks · ${pct}%"><span class="cn">${escHtml(collectorNumber)}</span>${escHtml(name)}</li>`;
+      const imgAttr = imageUrl ? ` data-img="${escHtml(imageUrl)}"` : '';
+      return `      <li title="${deckCount} decks · ${pct}%"${imgAttr}><span class="cn">${escHtml(collectorNumber)}</span>${escHtml(name)}</li>`;
     }).join('\n');
     return `
   <div class="set-col">
@@ -207,14 +226,53 @@ h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
   text-align: right;
   flex-shrink: 0;
 }
+#card-preview {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.7));
+}
+#card-preview img { width: 220px; border-radius: 10px; display: block; }
 </style>
 </head>
 <body>
 <h1>Pauper — Cards by Set</h1>
 <p class="meta">${totalDecks.toLocaleString()} decks · Generated ${new Date().toISOString().slice(0,10)} · newest set leftmost · sorted by collector number</p>
+<div id="card-preview"><img src="" alt=""></div>
 <div class="columns">
 ${cols}
 </div>
+<script>
+(function () {
+  const preview = document.getElementById('card-preview');
+  const img     = preview.querySelector('img');
+  const PAD     = 16;
+
+  document.addEventListener('mouseover', e => {
+    const li = e.target.closest('li[data-img]');
+    if (!li) return;
+    img.src = li.dataset.img;
+    preview.style.display = 'block';
+  });
+
+  document.addEventListener('mouseout', e => {
+    if (!e.target.closest('li[data-img]')) return;
+    preview.style.display = 'none';
+    img.src = '';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (preview.style.display === 'none') return;
+    const W = preview.offsetWidth, H = preview.offsetHeight;
+    let x = e.clientX + PAD, y = e.clientY + PAD;
+    if (x + W > window.innerWidth)  x = e.clientX - W - PAD;
+    if (y + H > window.innerHeight) y = e.clientY - H - PAD;
+    preview.style.left = x + 'px';
+    preview.style.top  = y + 'px';
+  });
+})();
+</script>
 </body>
 </html>`;
 }
@@ -233,9 +291,9 @@ async function main() {
   for (const [name, deckCount] of cardDecks) {
     const info = cardInfo.get(name);
     if (!info) continue;
-    const { setCode, setName, releasedAt, collectorNumber } = info;
+    const { setCode, setName, releasedAt, collectorNumber, imageUrl } = info;
     if (!bySet.has(setCode)) bySet.set(setCode, { setCode, setName, releasedAt, cards: [] });
-    bySet.get(setCode).cards.push({ name, deckCount, collectorNumber });
+    bySet.get(setCode).cards.push({ name, deckCount, collectorNumber, imageUrl });
   }
 
   // 세트: 최신 순, 카드: collector number 순
